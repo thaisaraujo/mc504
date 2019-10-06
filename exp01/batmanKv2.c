@@ -1,3 +1,12 @@
+/* MC504 Sistemas Operacionais
+ * Experimento 01 - Gerenciamento de Thread
+ * Autores: 
+ * Autores: Thais Araujo Bispo - RA:187386
+ * Data: 6/10/2019
+ */
+
+
+
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
@@ -8,19 +17,22 @@
 
 
 
+//Estrutura para BAT
 struct filaDir{
-
 	int id;
     char dir;
 	struct filaDir *prox;
 }; typedef struct filaDir filaDir;
 
+
+//Estrtura que armazena o vetor para começa da fila de BAT  
 struct filaInicios{
     filaDir *comeco;
 }; typedef struct filaInicios filaInicios;
 
-int k=2;
 
+//Variaveis Globais
+int k=2;
 pthread_mutex_t cruzamentoMutex;
 pthread_cond_t batN = PTHREAD_COND_INITIALIZER;
 pthread_cond_t batE = PTHREAD_COND_INITIALIZER;
@@ -28,10 +40,10 @@ pthread_cond_t batS = PTHREAD_COND_INITIALIZER;
 pthread_cond_t batW = PTHREAD_COND_INITIALIZER;
 
 
-
+//Prototipos das funcoes
 void enfileirar (int id, char dir, filaDir *fila);
-void *arrive (void * arg);
-void leave(filaDir *comeco); 
+void *chegada (void * arg);
+void saida(filaDir *comeco); 
 void * batman (void *arg);
 bool filaVazia (filaInicios **fila);
 void imprimir(filaInicios **fila);
@@ -46,8 +58,6 @@ int main(){
     int j=1;
     int i=0;
 
-
-
     char dirAtual;
     char direcoes[20];
 
@@ -57,13 +67,14 @@ int main(){
     //Inicializar Mutex cruzamentoMutex
     pthread_mutex_init(&cruzamentoMutex, NULL);
 
-
+    //Inicializar vetor filaPri que armazena ponteiro para inicio da fila de direcoes
     filaInicios *filaPri[3];
     for(i=0;i<4;i++){
         filaPri[i] = malloc(sizeof(filaInicios));
         filaPri[i]->comeco = NULL;
     }
    
+   //Inicializar a cabeca de cada fila
     for(i=0;i<4;i++){
         filaDir *pont = malloc(sizeof(filaDir));
         pont->dir = 'z';
@@ -77,7 +88,6 @@ int main(){
 
     while(1){
     
-        
         scanf("%s", direcoes);
         i=0;
         dirAtual = direcoes[i];
@@ -103,65 +113,49 @@ int main(){
             j++;
             i++;
             dirAtual=direcoes[i];
-          //  printf("estou aquiiiiiiiiiiiiiiiii\n");
 
         }
 
         //imprimir(filaPri);
-        //printf("Norte id:%d\n", filaPri[0]->comeco->id);
-        //printf("Leste id:%d\n", filaPri[1]->comeco->id);
-        //printf("Sul id:%d\n", filaPri[2]->comeco->id);
-        //printf("Oeste id:%d\n", filaPri[3]->comeco->id);
 
+        //criar thread gerenciador 
         pthread_create(&gerenciador, NULL, batman, (void *) filaPri);
 
+        //criar thread para cada fila, caso nao vazia
         for(i=0;i<4;i++){ 
-            //printf("Thread %d criada \n", i);
             if(filaPri[i]->comeco->prox != NULL){
-                pthread_create(&threadsDir[i],NULL, arrive, (void *) filaPri[i]->comeco);
-            }
-                
+                pthread_create(&threadsDir[i],NULL, chegada, (void *) filaPri[i]->comeco);
+            }       
         }
-
-
-
-
-
-
     }
-
-
-
 }
 
 
 
+/* 
+ * Rotina da Thread Gerenciador
+ * Definir qual fila irá para cruzamento
+ * Respeitando as regras do enunciado: 
+ * prioridades das direções, verificar se n>k, e se BAT já cedeu
+ * param: vetor filaPri
+ */
 void * batman (void *arg){    
     filaInicios **fila = (filaInicios **)arg;
     bool estaVazia = filaVazia(fila);
-    char ultimoCeder = '\0';
-
-    
+    char ultimoCeder = '\0';   //inicialziar a variavel 
+   
 
     while(estaVazia=filaVazia(fila) == false){
-        //printf("BATMANNN \n");
-
-
 
         if(fila[0]->comeco->prox != NULL){
             if(fila[0]->comeco->id > k && ultimoCeder != 'N'){
-                //printf("Norte id:%d\n", fila[0]->comeco->id);
                 ultimoCeder = 'N';
             }else{
                 if(ultimoCeder == 'N'){
                     ultimoCeder = '\0';
                 }
-                
                 pthread_cond_signal(&batN);  
                 }
-        
-
-
         } 
         
         if(fila[1]->comeco->prox != NULL){
@@ -173,8 +167,6 @@ void * batman (void *arg){
                 }
                     pthread_cond_signal(&batE);  
             }
-
-
         } 
         
         if(fila[2]->comeco->prox != NULL){
@@ -186,8 +178,6 @@ void * batman (void *arg){
                 }
                 pthread_cond_signal(&batS);  
             }
-
-
         }
         
         if(fila[3]->comeco->prox != NULL){
@@ -200,66 +190,59 @@ void * batman (void *arg){
                 pthread_cond_signal(&batW); 
             }
         }
-
-        //imprimir(fila);
-
-    }
-  
-    printf("SAIU DO BATMAN\n");
-    
-
+    } 
 }
 
 
-void *arrive (void *arg){
-    filaDir *comeco = (filaDir *)arg;
-    
 
-    //printf("ARRIVE - %c\n", dir);
+/* 
+ * Rotina para cada BAT
+ * Realizar cruzamento
+ * BAT realiza lock no cruzamento
+ * param: ponteiro da filaDir
+ */
+void *chegada (void *arg){
+    filaDir *comeco = (filaDir *)arg;
 
     while(comeco->prox != NULL){
-        //printf("PRESO NO ARRIVE\n");
 
         char dir = comeco->prox->dir;
 
         if(dir == 'N'){
-          //  printf("ESTOU N\n");
             pthread_mutex_lock(&cruzamentoMutex);
-            printf("LOCK NO N\n");
             pthread_cond_wait(&batN, &cruzamentoMutex);
-            printf("entrar no sleep\n");
             sleep(1);
-            leave(comeco);
+            saida(comeco);
             
         }else if(dir == 'E'){
-            //printf("ESTOU E\n");
             pthread_mutex_lock(&cruzamentoMutex);
             pthread_cond_wait(&batE, &cruzamentoMutex);
-            printf("LOCK E \n");
             sleep(1);
-            leave(comeco);
+            saida(comeco);
         }else if(dir == 'S'){
-            //printf("ESTOU S\n");
             pthread_mutex_lock(&cruzamentoMutex);
             pthread_cond_wait(&batS, &cruzamentoMutex);
-            //printf("LOCK S \n");
             sleep(1);
-            leave(comeco);
+            saida(comeco);
         }else if(dir == 'W'){
-            //printf("ESTOU W\n");
             pthread_mutex_lock(&cruzamentoMutex);
             pthread_cond_wait(&batW, &cruzamentoMutex);
-            printf("LOCK W \n");
             sleep(1);
-            leave(comeco);
+            saida(comeco);
         }
     }
   
 }
 
 
-void leave(filaDir *comeco){
-    printf("LEAVE - %c - %d\n", comeco->prox->dir, comeco->prox->id);
+
+/* 
+ * Saída do BAT no cruzamento
+ * Print da saida do cruzamento
+ * BAT realiza unlock e sai da fila (atualizar ponteiro da cabeca)
+ * param: filaDir
+ */
+void saida(filaDir *comeco){
     pthread_mutex_unlock(&cruzamentoMutex);
     printf("BAT %d %c saiu do cruzamento",comeco->prox->id, comeco->prox->dir);
 
@@ -267,16 +250,16 @@ void leave(filaDir *comeco){
     comeco->id--;
     filaDir *temp = comeco->prox;
 
-    
-    printf("id:%d \n", comeco->id);
-        
-
-
-
 }
 
 
 
+/* 
+ * Enfileira BAT na fila
+ * Print que o BAT chegou no cruzamento
+ * enfileira o BAT na fila de sua direção
+ * param: id do BAT, direcao e ponteiro da cabeca da fila
+ */
 void enfileirar (int id, char dir, filaDir *comeco){
     filaDir *temp, *novo;
     temp = comeco;
@@ -287,18 +270,18 @@ void enfileirar (int id, char dir, filaDir *comeco){
     novo->prox=NULL;
 
 
+    //Verificar se nao eh o primeiro elemento
+    //Procurar o ultima posicao inserida 
     if(temp->prox != NULL){
 
         while(temp->prox != NULL){
             temp = temp->prox;
         }
     
-        temp->prox=novo;
+        temp->prox=novo;    
     
     }else{
-
         temp->prox = novo;
-    
     }   
 
     comeco->id++;
@@ -308,6 +291,12 @@ void enfileirar (int id, char dir, filaDir *comeco){
 }
 
 
+
+/* 
+ * Verificar se nao existe mas BAT
+ * param: filaDir
+ * saida: bool true para fila vazia, false caso contrario
+ */
 bool filaVazia (filaInicios **fila){
     
     if(fila[0]->comeco->prox == NULL && fila[1]->comeco->prox == NULL && fila[2]->comeco->prox == NULL && fila[3]->comeco->prox == NULL){
@@ -318,6 +307,11 @@ bool filaVazia (filaInicios **fila){
 }
 
 
+
+/* 
+ * Imprimir todas as filas de direcao
+ * param: vetor de filaPri
+ */
 void imprimir(filaInicios **fila){
     int i=0;
     filaDir *temp;
@@ -331,10 +325,16 @@ void imprimir(filaInicios **fila){
         }
 
     }
-    
 }
 
 
+
+/* 
+ * Imprimir Impasse
+ * Verificar quais direcoes possui BAT que quer cruzar
+ * Verificar qual BAT vai cruzar (ultimoCeder ou segui ordem de prioridade)
+ * param: vetor de filaPri, char ultomoCeder
+ */
 void iprimirImpasse(filaInicios **fila, char ultimoCeder){
     char dir[4], passar;
     int i=0;
@@ -373,8 +373,13 @@ void iprimirImpasse(filaInicios **fila, char ultimoCeder){
 }
 
 
-char batPassar(filaInicios **fila, char ultimoCeder){
 
+/* 
+ * Funcao auxliar para Imprimir Impasse
+ * Verificar qual BAT foi o ultimo a ceder 
+ * param: vetor de filaPri, char ultomoCeder
+ */
+char batPassar(filaInicios **fila, char ultimoCeder){
     char batPassa;
 
     if(ultimoCeder != '\0'){
