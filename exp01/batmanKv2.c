@@ -2,6 +2,7 @@
  * Experimento 01 - Gerenciamento de Thread
  * Autores: 
  * Autores: Thais Araujo Bispo - RA:187386
+ * Caio Augusto Alves Nolasco - RA: 195181
  * Data: 6/10/2019
  */
 
