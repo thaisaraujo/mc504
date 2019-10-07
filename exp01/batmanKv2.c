@@ -1,8 +1,7 @@
 /* MC504 Sistemas Operacionais
  * Experimento 01 - Gerenciamento de Thread
- * Autores: 
+ * Autores: Caio Augusto Alves Nolasco - RA: 195181
  * Autores: Thais Araujo Bispo - RA:187386
- * Caio Augusto Alves Nolasco - RA: 195181
  * Data: 6/10/2019
  */
 
@@ -92,6 +91,10 @@ int main(){
         scanf("%s", direcoes);
         i=0;
         dirAtual = direcoes[i];
+        
+        if(dirAtual == 'K'){
+            k = direcoes[2];
+        }
 
         while(dirAtual != '\0'){
             
