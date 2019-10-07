@@ -151,6 +151,7 @@ void * batman (void *arg){
 
     while(estaVazia=filaVazia(fila) == false){
 
+
         if(fila[0]->comeco->prox != NULL){
             if(fila[0]->comeco->id > k && ultimoCeder != 'N'){
                 ultimoCeder = 'N';
@@ -169,7 +170,7 @@ void * batman (void *arg){
                 if(ultimoCeder == 'E'){
                     ultimoCeder = '\0';
                 }
-                    pthread_cond_signal(&batE);  
+                pthread_cond_signal(&batE);  
             }
         } 
         
