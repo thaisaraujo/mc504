@@ -13,6 +13,7 @@ typedef struct enderecosMemoria {
 
 void calculaEnderecoFisico (unsigned long int enderecoVirt, FILE* fppagemaps, enderecosMemoria *enderecosPresentes, enderecosMemoria *enderecosAusentes);
 void adicionarLista(enderecosMemoria *lista, unsigned long int valor);
+void imprimirLista(enderecosMemoria *lista);
 
 
 int main(){
@@ -31,8 +32,8 @@ int main(){
     char enderecoInicio[30], enderecoFinal[30];
     int i = 0, j = 0, k = 0;
     long unsigned int enderecoLongComeco, enderecoLongFinal;
-    fp = fopen("/proc/20501/maps", "r");
-    fppagemaps = fopen("/proc/20501/pagemap", "r");
+    fp = fopen("/proc/26062/maps", "r");
+    fppagemaps = fopen("/proc/26062/pagemap", "r");
     if (fp == NULL) {
         printf("Processo não existente\n");
     } else {
@@ -76,8 +77,13 @@ int main(){
         }
     }
 
-fclose(fp);
-fclose(fppagemaps);
+    printf("Imprimindo Presentes\n");
+    imprimirLista(&enderecosPresentes);
+    printf("Imprimindo Ausentes\n");
+    imprimirLista (&enderecosAusentes);
+
+    fclose(fp);
+    fclose(fppagemaps);
 
 }
 
@@ -99,10 +105,11 @@ void calculaEnderecoFisico (unsigned long int enderecoVirt, FILE* fppagemaps, en
 
     numeroPageFrame &= 0x7FFFFFFFFFFFFF;
 
+    printf("%lu %lu\n", numeroPageFrame, bits);
+
     if(bitsPagemap & 1){
         adicionarLista(enderecosPresentes, numeroPageFrame);
-    }else
-    {
+    }else{
         adicionarLista(enderecosAusentes, numeroPageFrame);
     }
     
@@ -125,5 +132,14 @@ void adicionarLista(enderecosMemoria *lista, unsigned long int valor){
 
         temp->prox = novoEndereco;
        
+    }
+}
+
+
+void imprimirLista(enderecosMemoria *lista){
+    enderecosMemoria *temp = lista->prox;
+    while(temp!=NULL){
+        printf("%lu", temp->valor);
+        temp = temp->prox;
     }
 }
