@@ -1,4 +1,5 @@
 /* Caio Augusto Alves Nolasco - RA:195181
+   Thais Araujo Bispo - RA:187386
 
     O código apresentado varre, linha por linha, o diretório /proc/pid/maps para um pid dado. Cada linha
     fornece um intervalo de páginas de memória virtual, que é percorrido, página por página, e cada endereço é enviado
@@ -87,8 +88,6 @@ int main(int argc, char **argv){
             } //le endereco final do intervalo de memória virtual
 
 
-            i = 0;
-            j = 0;
             i = 0;
             j = 0;
             enderecoLongComeco = strtol(enderecoInicio, NULL, 16);
