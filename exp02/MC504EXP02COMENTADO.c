@@ -10,6 +10,7 @@
     O offset para o diretório usado é offset = enderecoVirtual / PAGE_SIZE * TAMANHO_PAGEMAP(bytes)
 
     O código assume que as permissões CAP_SYS_ADMIN estão devidamente atribuídas.
+    precisava alterar o nome do arquivo para encaminhar para professor
 
 */
 
